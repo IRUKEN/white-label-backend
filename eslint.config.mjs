@@ -10,11 +10,11 @@ import importPlugin from 'eslint-plugin-import';
 import unicornPlugin from 'eslint-plugin-unicorn';
 import sonarjsPlugin from 'eslint-plugin-sonarjs';
 
-
 export default tseslint.config(
   {
     ignores: ['eslint.config.mjs'],
   },
+
   // Base recommended configs
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -84,6 +84,17 @@ export default tseslint.config(
       'sonarjs/no-duplicate-string': 'warn',
       'sonarjs/cognitive-complexity': ['warn', 15],
       'sonarjs/no-small-switch': 'off',
+    },
+  },
+
+  // 👉 Nuevo bloque: import resolver con soporte a tsconfig
+  {
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: './tsconfig.json',
+        },
+      },
     },
   }
 );
