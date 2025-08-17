@@ -1,15 +1,16 @@
-import { objectType, extendType, nonNull, stringArg } from 'nexus';
+// src/modules/user.ts
+import { objectType, extendType, stringArg, nonNull } from 'nexus';
+import { User } from 'nexus-prisma';
 
 import type { GraphQLContext } from '../../graphql/context';
 
-export const User = objectType({
-  name: 'User',
+export const UserType = objectType({
+  name: User.$name,
   definition(t) {
-    t.nonNull.string('id');
-    t.nonNull.string('email');
-    t.string('name');
-    t.nonNull.string('createdAt');
-    t.nonNull.string('updatedAt');
+    t.field(User.id);
+    t.field(User.email);
+    t.field(User.name);
+    t.field(User.createdAt);
   },
 });
 
@@ -17,9 +18,10 @@ export const UserQueries = extendType({
   type: 'Query',
   definition(t) {
     t.nonNull.list.nonNull.field('users', {
-      type: User,
-      resolve: (_r, _a, context: GraphQLContext) =>
-        context.prisma.user.findMany(),
+      type: UserType,
+      resolve: (_root, _arguments, context: GraphQLContext) => {
+        return context.prisma.user.findMany();
+      },
     });
   },
 });
@@ -28,16 +30,23 @@ export const UserMutations = extendType({
   type: 'Mutation',
   definition(t) {
     t.nonNull.field('createUser', {
-      type: User,
-      args: { email: nonNull(stringArg()), name: stringArg() },
+      type: UserType,
+      args: {
+        email: nonNull(stringArg()),
+        name: stringArg(),
+      },
       resolve: (
-        _r,
-        a: { email: string; name?: string | null },
+        _root,
+        arguments_: { email: string; name?: string | null },
         context: GraphQLContext,
-      ) =>
-        context.prisma.user.create({
-          data: { email: a.email, name: a.name ?? undefined },
-        }),
+      ) => {
+        return context.prisma.user.create({
+          data: {
+            email: arguments_.email,
+            name: arguments_.name ?? undefined,
+          },
+        });
+      },
     });
   },
 });
