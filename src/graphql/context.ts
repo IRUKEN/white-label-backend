@@ -2,10 +2,23 @@
 import type { Request } from 'express';
 import type { Logger as PinoLogger } from 'pino';
 
-import type { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface GraphQLContext {
-  req: Request; // if you switch to Fastify, change this type
-  prisma: PrismaService; // Prisma singleton (injected in GraphQL context)
-  logger?: PinoLogger; // request-scoped logger from nestjs-pino (req.log)
+  req: Request;
+  prisma: PrismaService;
+  logger?: PinoLogger;
 }
+
+// Esto se usa en AppModule
+export const createContext = ({
+  req,
+}: {
+  req: Request;
+}): Partial<GraphQLContext> => {
+  return {
+    req,
+    prisma: req.app.get('PrismaService') as PrismaService, // 👈 importante: recupera PrismaService desde la app
+    logger: req['log'], // 👈 si estás usando nestjs-pino, el logger va en req.log
+  };
+};
