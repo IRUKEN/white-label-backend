@@ -4,6 +4,15 @@ import pino from 'pino';
 
 import { buildPinoTargets } from './pino.stream';
 
+function checkIntrospectionQuery(query: unknown): boolean {
+  return (
+    typeof query === 'string' &&
+    (query.includes('__schema') ||
+      query.includes('__type') ||
+      query.trim() === '')
+  );
+}
+
 function resolveLevel(
   environment: string,
   explicit?: string,
@@ -34,18 +43,26 @@ const targets = buildPinoTargets(ENV);
         ...(targets.stream ? { stream: targets.stream } : {}),
 
         redact: {
-          paths: [
-            'req.headers.authorization',
-            'req.headers.cookie',
-            'req.body.password',
-            'req.body.token',
-            'res.headers["set-cookie"]',
-          ],
-          censor: '[Redacted]',
+          paths: [],
         },
-
         autoLogging: {
-          ignore: (req) => req.url === '/health' || req.url === '/metrics',
+          ignore: (req) => {
+            const isHealthOrMetrics =
+              req.url === '/health' || req.url === '/metrics';
+
+            const isGraphQLPost =
+              req.method === 'POST' && req.url === '/graphql';
+
+            const body = (req as { body?: unknown }).body;
+            const query =
+              typeof body === 'object' && body !== null && 'query' in body
+                ? (body as { query?: string }).query
+                : undefined;
+
+            const isIntrospection = checkIntrospectionQuery(query);
+
+            return isHealthOrMetrics || (isGraphQLPost && isIntrospection);
+          },
         },
 
         // keep serializers minimal to avoid heavy logs/loops

@@ -19,9 +19,15 @@ import { nexusSchema } from './schema';
       useFactory: (prisma: PrismaService) => ({
         schema: nexusSchema as GraphQLSchema,
         path: '/graphql',
-        playground: true,
+        introspection: process.env.NODE_ENV !== 'production',
+        playground: process.env.NODE_ENV !== 'production',
+
         // IMPORTANT: pass prisma + request-scoped logger (req.log) into context
-        context: ({ req }: { req: Request & { log?: unknown } }) => ({
+        context: ({
+          req,
+        }: {
+          req: Request & { log?: unknown };
+        }): { req: typeof req; prisma: PrismaService; logger: unknown } => ({
           req,
           prisma,
           logger: req.log, // provided by nestjs-pino (pino-http)
