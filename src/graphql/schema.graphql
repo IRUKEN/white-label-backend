@@ -13,6 +13,7 @@ type Query {
   users: [User!]!
 }
 
+"""GraphQL type for User entity"""
 type User {
   createdAt: DateTime!
   email: String!
